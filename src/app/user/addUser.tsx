@@ -11,6 +11,7 @@ import {
   FormControl,
   InputLabel,
   Typography,
+  Alert,
 } from "@mui/material";
 import type { UserProps } from "../types/type";
 
@@ -34,24 +35,21 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
     status: "published",
   });
 
-  console.log(userData);
-
-  const formRef = React.useRef<HTMLFormElement>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { data: fetchedUserData, isLoading: isEditingLoading } =
-    useQuery(
-      ["user", userId],
-      () => getUserById(userId || ""),
-      {
-        enabled: isEdit && !!userId,
-        onSuccess: (data) => {
-          if (data?.data) {
-            setUserData(data.data);
-          }
-        },
-      }
-    );
+  // Fetch user data when editing
+  const { data: fetchedUserData, isLoading: isEditingLoading } = useQuery(
+    ["user", userId],
+    () => getUserById(userId || ""),
+    {
+      enabled: isEdit && !!userId,
+      onSuccess: (data) => {
+        if (data?.data) {
+          setUserData(data.data);
+        }
+      },
+    }
+  );
 
   useEffect(() => {
     if (fetchedUserData?.data && isEdit) {
@@ -59,6 +57,7 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
     }
   }, [fetchedUserData, isEdit]);
 
+  // Reset form after submission
   const resetForm = () => {
     setUserData({
       id_user: "",
@@ -70,11 +69,12 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
     });
   };
 
+  // Mutations
   const addMutation = useMutation(addUser, {
     onSuccess: () => {
       setSuccessMessage("User added successfully!");
       resetForm();
-      setTimeout(() => setSuccessMessage(null), 2000); // Clear message after 2 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
     },
     onError: (error) => {
       console.error("Error adding user:", error);
@@ -84,27 +84,13 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
   const updateMutation = useMutation(
     (data: UserProps) => updateUser(userId || "", data),
     {
-      onMutate: async (newData) => {
-        await queryClient.cancelQueries(["user", userId]);
-
-        const previousUserData = queryClient.getQueryData(["user", userId]);
-
-        queryClient.setQueryData(["user", userId], newData);
-
-        return { previousUserData };
-      },
-
-      onError: (_, __, context) => {
-        queryClient.setQueryData(["user", userId], context.previousUserData);
-      },
-      onSettled: () => {
-        queryClient.invalidateQueries(["user", userId]);
-      },
       onSuccess: () => {
         setSuccessMessage("User updated successfully!");
         resetForm();
-        
-        setTimeout(() => setSuccessMessage(null), 2000); // Clear message after 2 seconds
+        setTimeout(() => setSuccessMessage(null), 3000);
+      },
+      onError: (error) => {
+        console.error("Error updating user:", error);
       },
     }
   );
@@ -123,12 +109,20 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     isEdit ? updateMutation.mutate(userData) : addMutation.mutate(userData);
   };
 
   if (isEditingLoading) {
-    return <CircularProgress />;
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
@@ -136,14 +130,17 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
       sx={{
         padding: "35px",
         borderRadius: "15px",
-        border: "1px solid black",
+        border: "1px solid #ddd",
         marginTop: "20px",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+        maxWidth: "400px",
+        margin: "auto",
       }}
     >
-      <form ref={formRef} onSubmit={handleSubmit} style={{ width: "300px" }}>
+      <form onSubmit={handleSubmit} style={{ width: "100%" }}>
         <Typography variant="h6" gutterBottom>
           {isEdit ? "Edit User" : "Add User"}
         </Typography>
@@ -165,15 +162,18 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
           required
           margin="normal"
         />
-        <TextField
-          label="Password"
-          name="password"
-          type="password"
-          value={""}
-          onChange={handleChange}
-          fullWidth
-          margin="normal"
-        />
+        {!isEdit && (
+          <TextField
+            label="Password"
+            name="password"
+            type="password"
+            value={userData.password || ""}
+            onChange={handleChange}
+            fullWidth
+            required
+            margin="normal"
+          />
+        )}
         <FormControl fullWidth margin="normal">
           <InputLabel>Select Role</InputLabel>
           <Select
@@ -194,7 +194,7 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
           color="primary"
           type="submit"
           disabled={addMutation.isLoading || updateMutation.isLoading}
-          sx={{ marginTop: "15px" }}
+          sx={{ marginTop: "15px", width: "100%" }}
         >
           {isEdit
             ? updateMutation.isLoading
@@ -205,17 +205,14 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
             : "Add User"}
         </Button>
         {(addMutation.isError || updateMutation.isError) && (
-          <Typography color="error" marginTop={2}>
-            Error {isEdit ? "updating" : "adding"} user:{" "}
-            {isEdit
-              ? updateMutation.error?.message
-              : addMutation.error?.message}
-          </Typography>
+          <Alert severity="error" sx={{ marginTop: "15px" }}>
+            Error {isEdit ? "updating" : "adding"} user.
+          </Alert>
         )}
         {successMessage && (
-          <Typography color="success.main" marginTop={2}>
+          <Alert severity="success" sx={{ marginTop: "15px" }}>
             {successMessage}
-          </Typography>
+          </Alert>
         )}
       </form>
     </Box>
