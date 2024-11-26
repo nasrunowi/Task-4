@@ -57,7 +57,6 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
     }
   }, [fetchedUserData, isEdit]);
 
-  // Reset form after submission
   const resetForm = () => {
     setUserData({
       id_user: "",
@@ -69,7 +68,6 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
     });
   };
 
-  // Mutations
   const addMutation = useMutation(addUser, {
     onSuccess: () => {
       setSuccessMessage("User added successfully!");
@@ -119,6 +117,7 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
         justifyContent="center"
         alignItems="center"
         height="100vh"
+        bgcolor="#f7f9fc"
       >
         <CircularProgress />
       </Box>
@@ -128,20 +127,27 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
   return (
     <Box
       sx={{
-        padding: "35px",
-        borderRadius: "15px",
-        border: "1px solid #ddd",
-        marginTop: "20px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+        padding: "30px",
+        borderRadius: "12px",
+        background: "white",
+        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
         maxWidth: "400px",
         margin: "auto",
+        marginTop: "50px",
+        border: "1px solid #e0e0e0",
+        bgcolor: "#f7f9fc",
       }}
     >
       <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{
+            fontWeight: "bold",
+            color: "#3f51b5",
+            textAlign: "center",
+          }}
+        >
           {isEdit ? "Edit User" : "Add User"}
         </Typography>
         <TextField
@@ -152,6 +158,7 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
           fullWidth
           required
           margin="normal"
+          variant="outlined"
         />
         <TextField
           label="Username"
@@ -161,6 +168,7 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
           fullWidth
           required
           margin="normal"
+          variant="outlined"
         />
         {!isEdit && (
           <TextField
@@ -172,10 +180,11 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
             fullWidth
             required
             margin="normal"
+            variant="outlined"
           />
         )}
         <FormControl fullWidth margin="normal">
-          <InputLabel>Select Role</InputLabel>
+          <InputLabel>Role</InputLabel>
           <Select
             name="role"
             value={userData.role || ""}
@@ -194,7 +203,17 @@ export const UserForm: React.FC<Partial<UserFormProps>> = ({
           color="primary"
           type="submit"
           disabled={addMutation.isLoading || updateMutation.isLoading}
-          sx={{ marginTop: "15px", width: "100%" }}
+          sx={{
+            marginTop: "15px",
+            width: "100%",
+            borderRadius: "8px",
+            textTransform: "capitalize",
+            padding: "10px 0",
+            backgroundColor: "#3f51b5",
+            "&:hover": {
+              backgroundColor: "#2c387e",
+            },
+          }}
         >
           {isEdit
             ? updateMutation.isLoading
